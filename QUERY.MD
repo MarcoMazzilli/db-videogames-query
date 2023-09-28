@@ -111,24 +111,123 @@ GROUP BY device_id
 ```
 6. Ordinare i videogame in base alla media delle recensioni (del videogioco vogliamo solo l'ID) (500)
 ```sql
-
+SELECT videogame_id, AVG(rating) 'avgRating'
+FROM reviews r 
+GROUP BY videogame_id 
+ORDER BY avgRating DESC;
 ```
 
 #### JOIN
 1. Selezionare i dati di tutti giocatori che hanno scritto almeno una recensione, mostrandoli una sola volta (996)
 ```sql
-
+SELECT DISTINCT p.*
+FROM reviews r 
+	JOIN players p 
+		ON r.player_id = p.id;
 ```
 2. Sezionare tutti i videogame dei tornei tenuti nel 2016, mostrandoli una sola volta (226)
 ```sql
+SELECT DISTINCT v.*
+FROM tournaments t 
+	JOIN tournament_videogame tv 
+		ON t.id = tv.tournament_id 
+	JOIN videogames v 
+		ON tv.videogame_id = v.id
+WHERE t.`year` = 2016;
 ```
 3. Mostrare le categorie di ogni videogioco (1718)
+```sql
+SELECT v.id ,v.name , c.name 
+FROM videogames v
+JOIN category_videogame cv  
+	ON v.id = cv.videogame_id
+JOIN categories c
+	ON c.id = cv.category_id 
+```
 4. Selezionare i dati di tutte le software house che hanno rilasciato almeno un gioco dopo il 2020, mostrandoli una sola volta (6)
+```sql
+SELECT sh.name , COUNT(v.id) 
+FROM software_houses sh 
+JOIN videogames v 
+	ON sh.id = v.software_house_id 
+WHERE YEAR(v.release_date) > 2020
+GROUP BY sh.id 
+```
 5. Selezionare i premi ricevuti da ogni software house per i videogiochi che ha prodotto (55)
+```sql
+SELECT v.id ,v.name , a.name 
+FROM award_videogame av
+JOIN videogames v 
+	ON v.id = av.videogame_id 
+JOIN awards a 
+	ON a.id = av.award_id 
+```
 6. Selezionare categorie e classificazioni PEGI dei videogiochi che hanno ricevuto recensioni da 4 e 5 stelle, mostrandole una sola volta (3363)
+```sql
+SELECT DISTINCT v.id, pl.name ,c.name 
+FROM videogames v
+JOIN pegi_label_videogame plv 
+	ON	v.id = plv.videogame_id 
+JOIN pegi_labels pl 
+	ON PL.id = plv.pegi_label_id
+JOIN category_videogame cv 
+	ON v.id = cv.videogame_id 
+JOIN categories c 
+	ON 	c.id = cv.category_id 
+JOIN reviews r 
+	ON v.id = r.videogame_id
+WHERE r.rating = 4
+	OR R.rating = 5
+```
 7. Selezionare quali giochi erano presenti nei tornei nei quali hanno partecipato i giocatori il cui nome inizia per 'S' (474)
+```sql
+SELECT DISTINCT  v.name as videogame_name
+FROM player_tournament pt 
+JOIN tournaments t 
+	ON t.id = pt.tournament_id
+JOIN players p 
+	on p.id = pt.player_id 
+JOIN tournament_videogame tv 
+	ON tv.tournament_id  = t.id 
+JOIN videogames v 
+	ON v.id = tv.videogame_id
+WHERE p.name LIKE 's%'
+```
 8. Selezionare le cittÃ  in cui Ã¨ stato giocato il gioco dell'anno del 2018 (36)
+```sql
+SELECT DISTINCT t.city 
+FROM awards a 
+	JOIN award_videogame av 
+		ON a.id = av.award_id 
+	JOIN videogames v 
+		ON av.videogame_id = v.id
+	JOIN tournament_videogame tv 
+		ON v.id = tv.videogame_id 
+	JOIN tournaments t 
+		ON tv.tournament_id = t.id 
+WHERE a.name LIKE "gioco dell'anno"
+	AND av.`year` = 2018;
+```
 9. Selezionare i giocatori che hanno giocato al gioco piÃ¹ atteso del 2018 in un torneo del 2019 (3306)
+```sql
+SELECT DISTINCT p.*
+FROM awards a
+	JOIN award_videogame av 
+		ON a.id = av.award_id 
+	JOIN videogames v 
+		ON av.videogame_id = v.id
+	JOIN tournament_videogame tv 
+		ON v.id = tv.videogame_id 
+	JOIN tournaments t 
+		ON tv.tournament_id = t.id 
+	JOIN player_tournament pt 
+		ON t.id = pt.tournament_id 
+	JOIN players p 
+		ON pt.player_id = p.id
+WHERE a.name LIKE 'Gioco più atteso'
+	AND av.`year` = 2018
+	AND t.`year` = 2019;
+```
 
 ##### BONUS
 10. Selezionare i dati della prima software house che ha rilasciato un gioco, assieme ai dati del gioco stesso (software house id : 5)
